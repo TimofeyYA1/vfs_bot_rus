@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from playwright.async_api import Browser, BrowserContext, Page, Playwright, async_playwright
 
@@ -39,7 +39,7 @@ class VFSBrowser:
         self._context: BrowserContext | None = None
         self.page: Page | None = None
 
-    async def __aenter__(self) -> "VFSBrowser":
+    async def __aenter__(self) -> VFSBrowser:
         await self.start()
         return self
 
@@ -89,7 +89,8 @@ class VFSBrowser:
             "\nВ открывшемся браузере войдите в VFS вручную. "
             "CAPTCHA/OTP, если появятся, проходятся только вручную."
         )
-        await asyncio.to_thread(input, "После успешного входа и появления dashboard нажмите Enter... ")
+        prompt = "После успешного входа и появления dashboard нажмите Enter... "
+        await asyncio.to_thread(input, prompt)
         await self._context.storage_state(path=str(self.settings.storage_state_path))
         print(f"Сессия сохранена: {self.settings.storage_state_path}")
 
@@ -116,7 +117,7 @@ class VFSBrowser:
             observation = SlotObservation(
                 target_id=target.id,
                 state=state,
-                checked_at=datetime.now(timezone.utc),
+                checked_at=datetime.now(UTC),
                 details=details,
                 visible_dates=visible_dates,
                 matching_dates=matching_dates,
@@ -255,7 +256,8 @@ class VFSBrowser:
     async def _body_text(self) -> str:
         assert self.page is not None
         try:
-            return await self.page.locator("body").inner_text(timeout=self.settings.action_timeout_ms)
+            body = self.page.locator("body")
+            return await body.inner_text(timeout=self.settings.action_timeout_ms)
         except Exception:
             return ""
 
@@ -307,7 +309,7 @@ class VFSBrowser:
         if not self.page:
             return
         try:
-            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
             safe_target = re.sub(r"[^a-zA-Z0-9_.-]", "_", target_id)
             base = self.settings.debug_dir / f"{stamp}_{safe_target}_{suffix}"
             await self.page.screenshot(path=str(base.with_suffix(".png")), full_page=True)
