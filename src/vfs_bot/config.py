@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     headless: bool = True
     locale: str = "ru-RU"
     timezone: str = "Europe/Moscow"
+    cdp_url: str = "http://127.0.0.1:9222"
     check_interval_seconds: int = Field(default=120, ge=30)
     check_jitter_seconds: int = Field(default=30, ge=0, le=900)
     navigation_timeout_ms: int = Field(default=45_000, ge=5_000)
