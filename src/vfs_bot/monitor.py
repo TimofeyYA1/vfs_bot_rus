@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from .browser import VFSBrowser
 from .config import Settings
@@ -33,7 +33,7 @@ class SlotMonitor:
         self.targets = targets
         self.store = store
         self.notifier = notifier
-        self._last_heartbeat = datetime.now(timezone.utc)
+        self._last_heartbeat = datetime.now(UTC)
 
     async def run_forever(self) -> None:
         await self.notifier.send(
@@ -100,7 +100,7 @@ class SlotMonitor:
         return False
 
     async def _maybe_heartbeat(self) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if now - self._last_heartbeat < timedelta(hours=self.settings.heartbeat_hours):
             return
         snapshot = sorted(self.store.snapshot().items())
