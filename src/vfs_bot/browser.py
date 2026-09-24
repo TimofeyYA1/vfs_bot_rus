@@ -37,6 +37,7 @@ class VFSBrowser:
         self._playwright: Playwright | None = None
         self._browser: Browser | None = None
         self._context: BrowserContext | None = None
+        self._owns_browser = True
         self.page: Page | None = None
 
     async def __aenter__(self) -> VFSBrowser:
@@ -51,6 +52,29 @@ class VFSBrowser:
         self.settings.storage_state_path.parent.mkdir(parents=True, exist_ok=True)
 
         self._playwright = await async_playwright().start()
+
+        if self.settings.browser_mode == "cdp":
+            self._browser = await self._playwright.chromium.connect_over_cdp(self.settings.cdp_url)
+            contexts = self._browser.contexts
+            if not contexts:
+                raise RuntimeError("Connected to Chrome over CDP, but no browser context was found")
+
+            self._context = contexts[0]
+            self._context.set_default_timeout(self.settings.action_timeout_ms)
+            self._context.set_default_navigation_timeout(self.settings.navigation_timeout_ms)
+            vfs_pages = [
+                page for page in self._context.pages if "visa.vfsglobal.com" in page.url
+            ]
+            if vfs_pages:
+                self.page = vfs_pages[-1]
+            elif self._context.pages:
+                self.page = self._context.pages[-1]
+            else:
+                self.page = await self._context.new_page()
+            self._owns_browser = False
+            return
+
+        self._owns_browser = True
         self._browser = await self._playwright.chromium.launch(
             headless=False if force_headed else self.settings.headless
         )
@@ -69,16 +93,18 @@ class VFSBrowser:
         self.page = await self._context.new_page()
 
     async def close(self) -> None:
-        if self._context:
-            await self._context.close()
-        if self._browser:
-            await self._browser.close()
+        if self._owns_browser:
+            if self._context:
+                await self._context.close()
+            if self._browser:
+                await self._browser.close()
         if self._playwright:
             await self._playwright.stop()
         self.page = None
         self._context = None
         self._browser = None
         self._playwright = None
+        self._owns_browser = True
 
     async def bootstrap_session(self) -> None:
         if not self.page or not self._context:
