@@ -94,6 +94,36 @@ class VFSBrowser:
         await self._context.storage_state(path=str(self.settings.storage_state_path))
         print(f"Сессия сохранена: {self.settings.storage_state_path}")
 
+    async def capture_session_from_cdp(self) -> None:
+        """Save session state from an already-authenticated regular Chrome instance."""
+        self.settings.storage_state_path.parent.mkdir(parents=True, exist_ok=True)
+        playwright = await async_playwright().start()
+        try:
+            browser = await playwright.chromium.connect_over_cdp(self.settings.cdp_url)
+            contexts = browser.contexts
+            if not contexts:
+                raise RuntimeError("Chrome is connected, but no browser context was found")
+
+            context = contexts[0]
+            vfs_pages = [page for page in context.pages if "visa.vfsglobal.com" in page.url]
+            if not vfs_pages:
+                raise RuntimeError(
+                    "VFS page not found in Chrome. Open the France/Russia VFS dashboard first."
+                )
+
+            page = vfs_pages[-1]
+            body = await page.locator("body").inner_text(timeout=self.settings.action_timeout_ms)
+            if self._looks_like_login(body):
+                raise RuntimeError(
+                    "VFS still shows the login page. Finish manual login in Chrome before capturing."
+                )
+
+            await context.storage_state(path=str(self.settings.storage_state_path))
+            print(f"Сессия сохранена: {self.settings.storage_state_path}")
+            print(f"Источник: {page.url}")
+        finally:
+            await playwright.stop()
+
     async def check_target(self, target: Target) -> SlotObservation:
         if not self.page:
             raise RuntimeError("Browser is not started")
