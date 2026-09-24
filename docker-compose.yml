@@ -1,0 +1,9 @@
+services:
+  vfs-monitor:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./.data:/app/.data
+      - ./targets.yml:/app/targets.yml:ro
