@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from enum import StrEnum
 
 from pydantic import BaseModel, Field, model_validator
@@ -34,15 +34,13 @@ class Target(BaseModel):
     def accepts_date(self, candidate: date) -> bool:
         if self.date_from and candidate < self.date_from:
             return False
-        if self.date_to and candidate > self.date_to:
-            return False
-        return True
+        return not (self.date_to and candidate > self.date_to)
 
 
 class SlotObservation(BaseModel):
     target_id: str
     state: CheckState
-    checked_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    checked_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     details: str = ""
     visible_dates: tuple[date, ...] = ()
     matching_dates: tuple[date, ...] = ()
