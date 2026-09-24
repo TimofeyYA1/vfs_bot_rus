@@ -25,7 +25,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("run", help="Run continuous monitoring")
     sub.add_parser("once", help="Check all enabled targets once")
-    sub.add_parser("bootstrap", help="Open a headed browser and save a VFS login session")
+    sub.add_parser("bootstrap", help="Open a headed Playwright browser and save a VFS session")
+    sub.add_parser(
+        "capture-session",
+        help="Save an already-authenticated normal Chrome session over CDP",
+    )
     sub.add_parser("validate", help="Validate environment and targets configuration")
     return parser
 
@@ -62,6 +66,11 @@ async def async_main(args: argparse.Namespace) -> int:
             await browser.bootstrap_session()
         finally:
             await browser.close()
+        return 0
+
+    if args.command == "capture-session":
+        browser = VFSBrowser(settings)
+        await browser.capture_session_from_cdp()
         return 0
 
     monitor = make_monitor(settings)
