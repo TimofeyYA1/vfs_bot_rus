@@ -1,0 +1,15 @@
+targets:
+  - id: moscow-short-stay
+    enabled: true
+    center: Moscow
+    category: Short Stay
+    subcategory: All kind of other short stay visas
+    # Optional desired appointment window:
+    # date_from: 2026-09-24
+    # date_to: 2026-11-30
+
+  - id: saint-petersburg-short-stay
+    enabled: false
+    center: Saint Petersburg
+    category: Short Stay
+    subcategory: All kind of other short stay visas
