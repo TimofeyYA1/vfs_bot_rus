@@ -54,9 +54,11 @@ class TelegramNotifier:
             lines.append(f"Подкатегория: {target.subcategory}")
 
         if item.matching_dates:
-            lines.append("Подходящие даты: " + ", ".join(d.isoformat() for d in item.matching_dates))
+            dates = ", ".join(d.isoformat() for d in item.matching_dates)
+            lines.append(f"Подходящие даты: {dates}")
         elif item.visible_dates:
-            lines.append("Видимые даты: " + ", ".join(d.isoformat() for d in item.visible_dates[:12]))
+            dates = ", ".join(d.isoformat() for d in item.visible_dates[:12])
+            lines.append(f"Видимые даты: {dates}")
 
         if item.details:
             lines.append(f"Детали: {item.details[:500]}")
