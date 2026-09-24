@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, Field, SecretStr
@@ -19,6 +20,7 @@ class Settings(BaseSettings):
     telegram_bot_token: SecretStr | None = None
     telegram_chat_id: str | None = None
 
+    browser_mode: Literal["playwright", "cdp"] = "playwright"
     headless: bool = True
     locale: str = "ru-RU"
     timezone: str = "Europe/Moscow"
